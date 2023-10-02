@@ -6,19 +6,11 @@
 ;; Jheison Gomez Muñoz 2310215
 
 
-;; https://github.com/valentinabarbetty/2310050-2310016-2310215-Taller2FLP2023.git
-
-
 ;; -------------------------- GRAMÁTICA -------------------------
 
 ;;       <FNC> ::= <num_variables> (<Clausulas>)
 ;; <Clausulas-and> ::= (<Clausula-or>) | (<Clausula-or>) and <Clausulas-and>
 ;;  <Clausula-or> ::= <numero> |  <numero> or <Clausula-or>
-
-
-
-
-
 
 
 ;; **************** REPRESENTACIÓN CON LISTAS ****************
@@ -27,8 +19,6 @@
 
 
 ;; <FNC> ::= <num_variables> (<Clausulas>)
-
-;; CONSTRUCTOR FNC
 (define FNC
   (lambda (num_variables clausulas)
     (list 'FNC num_variables clausulas)))
@@ -36,10 +26,8 @@
 ;; EJEMPLOS DE PRUEBAS
 (FNC 4 '((Clausulas-and (Clausula-or 3 5) (Clausulas-and (Clausula-or 9 6)))))
 
-;--------------------
 
 ;; <Clausulas-and> ::= (<Clausula-or>) | (<Clausula-or>) and <Clausulas-and>
-;; CONSTRUCTOR AND
 (define Clausulas-and
   (lambda (clausula-or clausulas)
     (if (null? clausulas)
@@ -50,12 +38,8 @@
 ;;(Clausulas-and (Clausula-or 3 5) '())
 ;;(Clausulas-and (Clausula-or 3 5) (Clausulas-and (Clausula-or 9 6)))
 
-;; ---------------------------
-
 
 ;; <Clausula-or> ::= <numero> | <numero> or <Clausula-or>
-;;CONSTRUCTOR OR
-
 (define Clausula-or
   (lambda (numero clausula)
     (if (null? clausula)
@@ -65,13 +49,9 @@
 (Clausula-or 3 '())
 (Clausula-or 3 (Clausula-or 3 (Clausula-or 9 6)))
 
-
-
-
-
 ;;---------------------- EXTRACTORES -----------------------
 
-;; EXTRACTORES NUMERO VARIABLES
+;; EXTRACTORES
 (define FNC->num_vars
   (lambda (l)
     (cadr l)))
@@ -80,9 +60,7 @@
 (FNC->num_vars (FNC 4 '((Clausulas-and (Clausula-or 3 5) (Clausulas-and (Clausula-or 9 6))))))
 
 
-
-;; ---------------------
-;; EXTRACTORES CLAUSULAS
+;; EXTRACTORES
 (define FNC->clausulas
   (lambda (l)
     (caddr l)))
@@ -90,9 +68,7 @@
 ;; EJEMPLOS PRUEBAS
 (FNC->clausulas (FNC 4 '((Clausulas-and (Clausula-or 3 5) (Clausulas-and (Clausula-or 9 6))))))
 
-
-;; ---------------------
-;; EXTRACTORES VARIABLES
+;; EXTRACTORES
 (define FNC->variables
   (lambda (l)
     (cond [(null? l) l]
@@ -106,8 +82,6 @@
 (FNC->variables (Clausula-or 3 (Clausula-or 9 (Clausula-or 5 6))))
 
 
-
-
 ;; CREACIÓN DE 3 INSTANCIAS SAT
 (FNC 4 '((Clausulas-and (Clausula-or 3 5) (Clausulas-and (Clausula-or 9 6)))))
 (FNC 2 '((Clausulas-and (Clausula-or 1 2) (Clausulas-and (Clausula-or 2 (Clausula-or 1 -1))))))
@@ -115,12 +89,7 @@
 
 
 
-
-
-
-
-
-;; ************************************ REPRESENTACIÓN CON DATA-TYPES ****************************************************
+;; *************************************************** REPRESENTACIÓN CON DATA-TYPES ****************************************************
 
 
 ;;       <FNC> ::= <num_variables> (<Clausulas-and>)
@@ -149,48 +118,25 @@
 
 
 
-;; CREACIÓN DE 3 INSTANCIAS SAT
-(fnc 8 (ands (numero 6)
-             (ands (clausulaor 4 (numero 2)) (ors (numero 3)))))
-
-(fnc 2 (ors (clausulaor 5 (numero 3))))
-
-(fnc 3 (ands (numero 6)
-             (ands (clausulaor 4 (numero 2))
-                   (ands (clausulaor 1
-                                     (clausulaor 2 (numero 1)))
-                         (ors (numero 2))))))
-
-
-
-
-;************************************* PARSE **************************************
-(define PARSEBNF
+;************************************* PARSE 
+(define parser2
   (lambda (dato)
     (cond
          [(number? dato)
               (numero dato)]
          [(and (= (length dato) 1) (and (list? dato) (number? (car dato))))
-          (PARSEBNF (car dato))
+          (parser2 (car dato))
          ]
          [(eqv? (car dato) 'fnc)
-             (fnc (cadr dato) (PARSEBNF (caddr dato)))]       
+             (fnc (cadr dato) (parser2 (caddr dato)))]       
          [(eqv? (cadr dato) 'or)          
-           (clausulaor (car dato) (PARSEBNF (cddr dato)))]
+           (clausulaor (car dato) (parser2 (cddr dato)))]
          [(eqv? (cadr dato) 'and)
           (cond[(> (length dato) 3)
-                 (ands (PARSEBNF (car dato)) (PARSEBNF (cddr dato)))]
-               [else (ands (PARSEBNF (car dato)) (ors (PARSEBNF (caddr dato))))]
+                 (ands (parser2 (car dato)) (parser2 (cddr dato)))]
+               [else (ands (parser2 (car dato)) (ors (parser2 (caddr dato))))]
            )]
          )))
-
-
-;; EJEMPLOS DE PRUEBAS
-(PARSEBNF '(fnc 5 ((1 or 2 or 3) and (4 or 5 or 6))))
-(PARSEBNF '(fnc 5 ((1 or 2 or 3) and (4 or 5 or 6) and (1))))
-
-
-
 
 ;*************************************  UNPARSE
 (define unparser-cor
@@ -213,35 +159,13 @@
              (list (unparser-and restBody))))
     )))
 
-(define UNPARSEBNF
+(define unparser
   (lambda (exp)
     (cases SAT exp
       (fnc (num_variables clau)
            (append (list 'FNC)
            (list num_variables)
            (list (unparser-and clau)))))))
-
-
-
-;; EJEMPLOS DE PRUEBA
-(UNPARSEBNF (fnc 3 (ands (numero 6)
-             (ands (clausulaor 4 (numero 2))
-                   (ands (clausulaor 1
-                                     (clausulaor 2 (numero 1)))
-                         (ors (numero 2)))))))
-
-(UNPARSEBNF (fnc 2 (ors (clausulaor 5 (numero 3)))))
-
-
-
-
-
-
-
-
-
-;; **************************** CODIGO CLIENTE ************
-
 
 ;*************************************  MATRIZ
 (define patron
@@ -269,10 +193,7 @@
         (cons (cons #f (car resto)) (append-f-resto (cdr resto))))))
 
 
-
-
-
-;*************************************** EVALUACIÓN DE INSTANCIAS SAT
+;*************************************** 
 
 (define EVALUARSAT
   (lambda (l)
@@ -326,9 +247,6 @@
   )
 
 
-
-
-;; ************************* EJEMPLOS DE PRUEBAS
 (define fnc-ejemplo '(fnc 2 (Clausula-or 1 (Clausula-or 2 1))))
 (define fnc-ejemplo2
   '(fnc 2 (Clausulas-and
