@@ -17,10 +17,6 @@
 
 
 
-
-
-
-
 ;; **************** REPRESENTACIÓN CON LISTAS ****************
 
 ;;---------------------- CONSTRUCTORES -----------------------
@@ -64,8 +60,6 @@
 ;; EJEMPLOS DE PRUEBAS
 (Clausula-or 3 '())
 (Clausula-or 3 (Clausula-or 3 (Clausula-or 9 6)))
-
-
 
 
 
@@ -165,6 +159,10 @@
 
 
 ;************************************* PARSE **************************************
+;; La funcion PARSEBNF es encargada de analizar e intérpretar notaciónes BFN,
+;; y su función principal es dirigir el flujo de procesamiento de acuerdo con la estructura de la expresión BNF que recibe como entrada.
+;;Su objetivo general es traducir expresiones en una notación específica BFN en un formato o acción específica de árbol de sintaxis abstracta.
+
 (define PARSEBNF
   (lambda (dato)
     (cond
@@ -193,6 +191,11 @@
 
 
 ;*************************************  UNPARSE
+
+;;La funcion UNPARSEBNF es la encargada de tomar un árbol de sintaxis abstracta y lo transforma en listas legibles y de fácil comprensión.
+;;Esta función utiliza datatypes previamente definidos para llevar a cabo la tarea. Su objetivo principal es convertir
+;;la representación interna del código fuente, en forma de un árbol de sintaxis abstracta, de vuelta al código fuente original,
+;;lo que facilita su lectura y comprensión.
 (define unparser-cor
   (lambda (exp)
     (cases cor exp
@@ -243,11 +246,17 @@
 ;; **************************** CODIGO CLIENTE ************
 
 
-;*************************************  MATRIZ
+;;*************************************  MATRIZ F y V
+;;Esta función genera una matriz de valores 'V' y 'F' basada en el número de variables ingresadas en la expresión
+;;en Forma Normal Conjuntiva (FNC). Por ejemplo, si se llama con 'patron 2', devuelve '((vv)(vf)(fv)(ff))'.
+
 (define patron
   (lambda (tamano)
     (LxL tamano tamano)))
 
+;;La función LxL toma dos argumentos, tamano y longitud, y crea un patrón de listas anidadas de tamaño
+;;tamano por longitud. Utiliza recursión para construir el patrón llamando a las funciones append-v-resto
+;;y append-f-resto en cada iteración.
 (define LxL
   (lambda (tamano longitud)
     (if (= longitud 0)
@@ -256,11 +265,16 @@
                 (append-f-resto (LxL tamano (- longitud 1)))
                 ))))
 
+;;Las funciones append-v-resto y append-f-resto toman una lista resto y agregan elementos
+;;#t (verdadero) o #f (falso) al principio de cada sublista en resto, creando así un patrón
+;;de valores verdaderos o falsos en función de la entrada
+
 (define append-v-resto
   (lambda (resto)
     (if (null? resto)
         '()
         (cons (cons #t (car resto)) (append-v-resto (cdr resto))))))
+
 
 (define append-f-resto
   (lambda (resto)
@@ -269,17 +283,20 @@
         (cons (cons #f (car resto)) (append-f-resto (cdr resto))))))
 
 
-
-
+;; EJEMPLOS DE PRUEBA
+(patron 2) 
+(patron 4)
 
 ;*************************************** EVALUACIÓN DE INSTANCIAS SAT
+;Introduce una función en Forma Normal Conjuntiva (FNC) que será evaluada para
+;determinar si es satisfacible o insatisfacible.
 
 (define EVALUARSAT
   (lambda (l)
     (recursion (caddr l) (patron(FNC->num_vars l)))
   )
 )
-
+;Esta función auxiliar se encarga de realizar recursión con las diversas combinaciones del patrón.
 (define recursion
   (lambda (l matriz)
     (cond [(null? matriz) "insatisfactible"]
@@ -289,7 +306,8 @@
     )
   )
 )
-
+;Esta función tiene la responsabilidad de extraer los elementos de la función FNC utilizando
+;los extractores y ejecutar las operaciones lógicas "OR" y "AND" según corresponda.
 (define evalu-and
   (lambda (l matriz)
    (cond
@@ -304,7 +322,9 @@
 )
 
 
-;;evalua los or dentro de la lista (or v v f) = v
+;;Esta función tiene la tarea de llevar a cabo la operación "OR" dentro de la función
+;;FNC y, al mismo tiempo, verifica si un número es negativo para cambiar la respuesta
+;; de "Verdadero" a "Falso" o de "Falso" a "Verdadero
 (define convertir
  (lambda (l matriz)
    (cond [(null? l) #f]
@@ -315,7 +335,10 @@
  )
 )
 
-;;Recorre matriz de v y f primera 
+;;El propósito de esta función es extraer el valor en la posición correspondiente de la matriz
+;;de valores verdaderos y falsos, según el número ingresado.
+;;Por ejemplo, si se ingresa el número 2 y la lista es '(V F)', la función retornará
+;;'F', ya que 'F' se encuentra en la posición 2.
 (define recorrer
   (lambda (l matriz contador)
    (cond [(null? matriz) #f]
